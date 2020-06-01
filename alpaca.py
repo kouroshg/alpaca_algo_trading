@@ -33,3 +33,6 @@ def get_bars(symbols, timeframe, count):
     bars = api.get_barset(symbols, timeframe, limit=count)
     bars = cleanup_json(bars)
     return bars
+
+def get_last_quote(symbol):
+    return api.get_last_quote(symbol)

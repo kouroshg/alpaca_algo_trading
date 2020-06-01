@@ -21,19 +21,26 @@ if not alpaca.is_market_open():
     time.sleep(alpaca.get_next_open() - now)
 
 def generate_table():
-    bars = alpaca.get_bars(symbols,timeframe,2)
+    bars = alpaca.get_bars(symbols,timeframe,1)
     table = []
     for sym in symbols:
+        if bars[sym]==None:
+            continue
         if len(bars[sym]) == 0:
             continue
-        last_close = bars[sym][0]['c']
-        today_open = bars[sym][1]['o']
-        qty = money.get_num_of_shares(today_open)
-        cost = qty * today_open
-        gap = today_open - last_close
-        table.append([sym, today_open , gap, qty, cost])
+        try:
+            quote = alpaca.get_last_quote(sym)
+            bid = quote.bidprice
+            last_close = bars[sym][0]['c']
+            qty = money.get_num_of_shares(bid)
+            cost = qty * bid
+            gap = bid - last_close
+            table.append([sym, bid , gap, qty, cost, datetime.fromtimestamp(bars[sym][0]['t']), last_close])
+        except:
+            print("Error getting quote for Symbol: " + sym)
+            continue
 
-    headers = ["Symbol", "Today's open", "Gap", "Shares", "Cost"]
+    headers = ["Symbol", "Current", "Gap", "Shares", "Cost", "time", "Last close"]
     sorted_table = sorted(table,key=lambda x: x[2])
     print(tabulate(sorted_table,headers=headers))
     return sorted_table
@@ -57,9 +64,12 @@ buying = get_buying_assets()
 if len(buying) > 0:
     confirm = input ("Submit order? [y/n]")
     if confirm == "y":
-        api.submit_order(buying[0],buying[3],"buy","market","gtc")
+        for i in range (0,len(buying)):
+            pass
+            api.submit_order(buying[i][0],buying[i][3],"buy","market","gtc")
 
 if alpaca.is_market_open():
+    [print(p.side + " " + p.symbol + " p/l: " + p.unrealized_pl) for p in api.list_positions()]
     print("Waiting for market close")
     time.sleep((alpaca.get_next_close() - now)-420)
     for position in api.list_positions():
