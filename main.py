@@ -16,10 +16,6 @@ now = datetime.timestamp(datetime.now())
 # Yahoo Finance: Gainers and Trending
 symbols = list(set().union(market.getGainers(), market.getTrending()))
 
-if not alpaca.is_market_open():
-    print ("Waiting for market open...")
-    time.sleep(alpaca.get_next_open() - now)
-
 def generate_table():
     bars = alpaca.get_bars(symbols,timeframe,1)
     table = []
@@ -65,20 +61,12 @@ if len(buying) > 0:
     confirm = input ("Submit order? [y/n]")
     if confirm == "y":
         for i in range (0,len(buying)):
-            pass
             api.submit_order(buying[i][0],buying[i][3],"buy","market","gtc")
 
-if alpaca.is_market_open():
-    [print(p.side + " " + p.symbol + " p/l: " + p.unrealized_pl) for p in api.list_positions()]
-    print("Waiting for market close")
-    time.sleep((alpaca.get_next_close() - now)-420)
-    for position in api.list_positions():
-        qty = position['qty']
-        sym = position['symbol']
-        side = "Buying" if position['side']=="long" else "Selling"
-        profit_loss = position['unrealized_pl']
-        print("{0} {1} shares of {2} p/l: {3}".format(side,qty,sym,profit_loss))
 
+[print(p.side + " " + p.symbol + " p/l: " + p.unrealized_pl) for p in api.list_positions()]
+confirm = input("Close all? [y/n]")
+if confirm:
     api.close_all_positions()
     print("Positions closed")
 
