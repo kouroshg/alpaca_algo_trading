@@ -13,6 +13,13 @@ endpoint = os.getenv('ALPACA_PAPER_BASE_URL')
 
 api = tradeapi.REST(key, secret, base_url=endpoint, api_version='v2')
 
+def get_asset(symbol):
+    try :
+        cleaned = str(api.get_asset(symbol)).replace("Asset(","").replace(")","").replace("'","\"").replace("False", "\"False\"").replace("True","\"True\"")
+        return json.loads(cleaned)
+    except:
+        return json.loads("{\"tradable\":\"False\"}")
+
 def get_account():
     return api.get_account()
 
